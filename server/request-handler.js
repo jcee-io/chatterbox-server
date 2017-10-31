@@ -11,6 +11,16 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var defaultCorsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type, accept',
+  'access-control-max-age': 10 // Seconds.
+};
+
+var body = {
+  results: []
+};
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -30,10 +40,8 @@ var requestHandler = function(request, response) {
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
   // The outgoing status.
-  var statusCode = 200;
-  var send = {
-    results: []
-  };
+  var statusCode = 404;
+
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
 
@@ -55,23 +63,23 @@ var requestHandler = function(request, response) {
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
 
-  if (request.method === 'GET') {
+  if (request.method === 'GET' && request.url === '/classes/messages') {
 
+    statusCode = 200;
+ 
   }
 
-  if (request.method === 'POST') {
+  if (request.method === 'POST' && request.url === '/classes/messages') {
     statusCode = 201;
+    
 
-    request.on('data', (chunk) => {
-      send.results.push(chunk);
-    });
+    body.results.push(request._postData);
+    
+
   }
-
+  
   response.writeHead(statusCode, headers);
-
-
-
-  response.end(JSON.stringify(send));
+  response.end(JSON.stringify(body));
 };
 
 
@@ -87,11 +95,6 @@ var requestHandler = function(request, response) {
 //
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
-var defaultCorsHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'content-type, accept',
-  'access-control-max-age': 10 // Seconds.
-};
+
 
 exports.requestHandler = requestHandler;
